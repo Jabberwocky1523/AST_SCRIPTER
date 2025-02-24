@@ -1,3 +1,4 @@
-./.vscode
-./build
-.CMakeLists.txt
+.vscode/
+build/
+CMakeLists.txt
+README.md
