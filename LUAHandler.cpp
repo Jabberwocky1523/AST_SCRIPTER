@@ -37,35 +37,40 @@ static size_t conv_buf_len = 0;
 
 int NL_dofile(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    const char *str = luaL_checkstring( state, 1 );
-    
+    const char *str = luaL_checkstring(state, 1);
+
     unsigned long length = lh->sh->cBR->getFileLength(str);
-    if (length == 0){
+    if (length == 0)
+    {
         utils::printInfo("cannot open %s\n", str);
         return 0;
     }
 
-    unsigned char *buffer = new unsigned char[length+1];
+    unsigned char *buffer = new unsigned char[length + 1];
     int location;
     lh->sh->cBR->getFile(str, buffer, &location);
     buffer[length] = 0;
 
-    unsigned char *buffer2 = new unsigned char[length*3/2];
+    unsigned char *buffer2 = new unsigned char[length * 3 / 2];
     unsigned char *p = buffer;
     unsigned char *p2 = buffer2;
-    while(*p){
-        if (IS_TWO_BYTE(*p)){
+    while (*p)
+    {
+        if (IS_TWO_BYTE(*p))
+        {
             *p2++ = *p++;
-            if (*p == '\\') *p2++ = '\\';
+            if (*p == '\\')
+                *p2++ = '\\';
         }
         *p2++ = *p++;
     }
 
-    if (luaL_loadbuffer(state, (const char*)buffer2, p2 - buffer2, str) || 
-        lua_pcall(state, 0, 0, 0)){
+    if (luaL_loadbuffer(state, (const char *)buffer2, p2 - buffer2, str) ||
+        lua_pcall(state, 0, 0, 0))
+    {
         utils::printInfo("cannot parse %s %s\n", str, lua_tostring(state, -1));
     }
 
@@ -77,39 +82,39 @@ int NL_dofile(lua_State *state)
 
 int NSCheckComma(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int val = lh->sh->getEndStatus();
     if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ))
-        lua_pushboolean( state, 1 );
+        lua_pushboolean(state, 1);
     else
-        lua_pushboolean( state, 0 );
-        
+        lua_pushboolean(state, 0);
+
     return 1;
 }
 
 int NSDDelete(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
+    int no = luaL_checkinteger(state, 1);
 
     lh->ons->NSDDeleteCommand(no);
-        
+
     return 0;
 }
 
 int NSDCall(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int num = luaL_checkinteger( state, 1 );
-    const char *str1 = luaL_checkstring( state, 2 );
-    int proc = luaL_checkinteger( state, 3 );
-    const char *str2 = luaL_checkstring( state, 4 );
+    int num = luaL_checkinteger(state, 1);
+    const char *str1 = luaL_checkstring(state, 2);
+    int proc = luaL_checkinteger(state, 3);
+    const char *str2 = luaL_checkstring(state, 4);
 
     lh->ons->NSDCallCommand(num, str1, proc, str2);
 
@@ -118,24 +123,26 @@ int NSDCall(lua_State *state)
 
 int NSDDLL(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    const char *str1 = luaL_checkstring( state, 1 );
-    const char *str2 = luaL_checkstring( state, 2 );
+    const char *str1 = luaL_checkstring(state, 1);
+    const char *str2 = luaL_checkstring(state, 2);
 
-    struct DllFuncTable{
+    struct DllFuncTable
+    {
         const char *name1, *name2;
     } dll_func_table[] = {
         {"deffontd.dll", "Font"},
         {NULL, NULL},
     };
 
-    int idx=0;
-    while(dll_func_table[idx].name1){
+    int idx = 0;
+    while (dll_func_table[idx].name1)
+    {
         size_t len = strlen(dll_func_table[idx].name1);
         if (strlen(str1) >= len &&
-            strncmp(str1+strlen(str1)-len, dll_func_table[idx].name1, len) == 0 &&
+            strncmp(str1 + strlen(str1) - len, dll_func_table[idx].name1, len) == 0 &&
             strcmp(str2, dll_func_table[idx].name2) == 0)
             break;
         idx++;
@@ -146,89 +153,89 @@ int NSDDLL(lua_State *state)
     else
         idx = 0;
 
-    lua_pushinteger( state, idx );
+    lua_pushinteger(state, idx);
 
     return 1;
 }
 
 int NSDLoad(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    const char *str = luaL_checkstring( state, 2 );
+    int no = luaL_checkinteger(state, 1);
+    const char *str = luaL_checkstring(state, 2);
 
     lh->ons->NSDLoadCommand(no, str);
-        
+
     return 0;
 }
 
 int NSDPresentRect(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int x1 = luaL_checkinteger( state, 1 );
-    int y1 = luaL_checkinteger( state, 2 );
-    int x2 = luaL_checkinteger( state, 3 );
-    int y2 = luaL_checkinteger( state, 4 );
+    int x1 = luaL_checkinteger(state, 1);
+    int y1 = luaL_checkinteger(state, 2);
+    int x2 = luaL_checkinteger(state, 3);
+    int y2 = luaL_checkinteger(state, 4);
 
     lh->ons->NSDPresentRectCommand(x1, y1, x2, y2);
-        
+
     return 0;
 }
 
 int NSDSp2(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int num = luaL_checkinteger( state, 1 );
-    int dcx = luaL_checkinteger( state, 2 );
-    int dcy = luaL_checkinteger( state, 3 );
-    int sx = luaL_checkinteger( state, 4 );
-    int sy = luaL_checkinteger( state, 5 );
-    int w = luaL_checkinteger( state, 6 );
-    int h = luaL_checkinteger( state, 7 );
-    float xs = luaL_checknumber( state, 8 );
-    float xy = luaL_checknumber( state, 9 );
-    float rot = luaL_checknumber( state, 10 );
-    int alpha = luaL_checkinteger( state, 11 );
+    int num = luaL_checkinteger(state, 1);
+    int dcx = luaL_checkinteger(state, 2);
+    int dcy = luaL_checkinteger(state, 3);
+    int sx = luaL_checkinteger(state, 4);
+    int sy = luaL_checkinteger(state, 5);
+    int w = luaL_checkinteger(state, 6);
+    int h = luaL_checkinteger(state, 7);
+    float xs = luaL_checknumber(state, 8);
+    float xy = luaL_checknumber(state, 9);
+    float rot = luaL_checknumber(state, 10);
+    int alpha = luaL_checkinteger(state, 11);
 
     lh->ons->NSDSp2Command(num, dcx, dcy, sx, sy, w, h,
-                           (int)(xs*100.0), (int)(xy*100.0), (int)rot, alpha);
-        
+                           (int)(xs * 100.0), (int)(xy * 100.0), (int)rot, alpha);
+
     return 0;
 }
 
 int NSDSetSprite(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int spnum = luaL_checkinteger( state, 1 );
-    int texnum = luaL_checkinteger( state, 2 );
+    int spnum = luaL_checkinteger(state, 1);
+    int texnum = luaL_checkinteger(state, 2);
     const char *str = NULL;
-    if (lua_isstring( state, 3 ))
-        str = luaL_checkstring( state, 3 );
+    if (lua_isstring(state, 3))
+        str = luaL_checkstring(state, 3);
 
     lh->ons->NSDSetSpriteCommand(spnum, texnum, str);
-        
+
     return 0;
 }
 
 int NSDoEvents(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
-    
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
+
     sprintf(cmd_buf, "_wait 0");
     lh->sh->enterExternalScript(cmd_buf);
     lh->ons->runScript();
     lh->sh->leaveExternalScript();
 
-    lua_pushboolean( state, false );
+    lua_pushboolean(state, false);
 
     return 1;
 }
@@ -236,8 +243,8 @@ int NSDoEvents(lua_State *state)
 int NSEnd(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
-    
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
+
     sprintf(cmd_buf, "_end");
     lh->sh->enterExternalScript(cmd_buf);
     lh->ons->runScript();
@@ -249,9 +256,9 @@ int NSEnd(lua_State *state)
 int NSExec(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
-    
-    lh->sh->enterExternalScript((char*)lua_tostring(state, 1));
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
+
+    lh->sh->enterExternalScript((char *)lua_tostring(state, 1));
     lh->ons->runScript();
     lh->sh->leaveExternalScript();
 
@@ -261,7 +268,7 @@ int NSExec(lua_State *state)
 int NSExecAnimation(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     lh->ons->waitEventSub(0);
 
@@ -271,10 +278,10 @@ int NSExecAnimation(lua_State *state)
 int NSGosub(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
-    
-    const char *str = luaL_checkstring( state, 1 );
-    lh->ons->gosubReal( str+1, lh->sh->getNext() );
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
+
+    const char *str = luaL_checkstring(state, 1);
+    lh->ons->gosubReal(str + 1, lh->sh->getNext());
 
     return 0;
 }
@@ -282,10 +289,10 @@ int NSGosub(lua_State *state)
 int NSGoto(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
-    
-    const char *str = luaL_checkstring( state, 1 );
-    lh->ons->setCurrentLabel( str+1 );
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
+
+    const char *str = luaL_checkstring(state, 1);
+    lh->ons->setCurrentLabel(str + 1);
 
     return 0;
 }
@@ -293,41 +300,41 @@ int NSGoto(lua_State *state)
 int NSGetClick(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     ONScripter::ButtonState &bs = lh->ons->getCurrentButtonState();
 
     if (bs.event_type == SDL_MOUSEBUTTONUP && bs.event_button == SDL_BUTTON_LEFT)
-        lua_pushboolean( state, true );
+        lua_pushboolean(state, true);
     else
-        lua_pushboolean( state, false );
+        lua_pushboolean(state, false);
 
     if (bs.event_type == SDL_MOUSEBUTTONUP && bs.event_button == SDL_BUTTON_RIGHT)
-        lua_pushboolean( state, true );
+        lua_pushboolean(state, true);
     else
-        lua_pushboolean( state, false );
+        lua_pushboolean(state, false);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     if (bs.event_button == SDL_MOUSEWHEEL)
         lua_pushinteger(state, bs.y);
     else
 #elif SDL_VERSION_ATLEAST(1, 2, 5)
     if (bs.event_button == SDL_BUTTON_WHEELUP)
-        lua_pushinteger( state, 1 );
+        lua_pushinteger(state, 1);
     else if (bs.event_button == SDL_BUTTON_WHEELDOWN)
-        lua_pushinteger( state, -1 );
+        lua_pushinteger(state, -1);
     else
 #endif
-        lua_pushinteger( state, 0 );
+        lua_pushinteger(state, 0);
 
     if (bs.event_type == SDL_MOUSEBUTTONDOWN && bs.event_button == SDL_BUTTON_LEFT)
-        lua_pushboolean( state, true );
+        lua_pushboolean(state, true);
     else
-        lua_pushboolean( state, false );
+        lua_pushboolean(state, false);
 
     if (bs.event_type == SDL_MOUSEBUTTONDOWN && bs.event_button == SDL_BUTTON_RIGHT)
-        lua_pushboolean( state, true );
+        lua_pushboolean(state, true);
     else
-        lua_pushboolean( state, false );
+        lua_pushboolean(state, false);
 
     bs.event_type = 0;
     bs.event_button = 0;
@@ -337,28 +344,28 @@ int NSGetClick(lua_State *state)
 
 int NSGetIntValue(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    lua_pushnumber( state, lh->sh->getVariableData(no).num );
-    
+    int no = luaL_checkinteger(state, 1);
+    lua_pushnumber(state, lh->sh->getVariableData(no).num);
+
     return 1;
 }
 
 int NSGetKey(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    const char *str = luaL_checkstring( state, 1 );
+    const char *str = luaL_checkstring(state, 1);
     ONScripter::ButtonState bs = lh->ons->getCurrentButtonState();
-    
-    if ( strcmp(str, bs.str) == 0 || 
+
+    if (strcmp(str, bs.str) == 0 ||
         (strcmp(str, "ESC") == 0 && strcmp(bs.str, "RCLICK") == 0))
-        lua_pushboolean( state, 1 );
+        lua_pushboolean(state, 1);
     else
-        lua_pushboolean( state, 0 );
+        lua_pushboolean(state, 0);
 
     return 1;
 }
@@ -366,17 +373,19 @@ int NSGetKey(lua_State *state)
 int NSGetMouse(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     ONScripter::ButtonState bs = lh->ons->getCurrentButtonState();
-    
-    if (bs.x == lh->ons->getWidth() && bs.y == lh->ons->getHeight()){
-        lua_pushinteger( state, -1 );
-        lua_pushinteger( state, -1 );
+
+    if (bs.x == lh->ons->getWidth() && bs.y == lh->ons->getHeight())
+    {
+        lua_pushinteger(state, -1);
+        lua_pushinteger(state, -1);
     }
-    else{
-        lua_pushinteger( state, bs.x*lh->screen_ratio2/lh->screen_ratio1 );
-        lua_pushinteger( state, bs.y*lh->screen_ratio2/lh->screen_ratio1 );
+    else
+    {
+        lua_pushinteger(state, bs.x * lh->screen_ratio2 / lh->screen_ratio1);
+        lua_pushinteger(state, bs.y * lh->screen_ratio2 / lh->screen_ratio1);
     }
 
     return 2;
@@ -385,32 +394,32 @@ int NSGetMouse(lua_State *state)
 int NSGetSkip(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
-    
-    lua_pushinteger( state, lh->ons->getSkip() );
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
+
+    lua_pushinteger(state, lh->ons->getSkip());
 
     return 1;
 }
 
 int NSGetStrValue(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    
-    lua_pushstring( state, lh->sh->getVariableData(no).str );
-    
+    int no = luaL_checkinteger(state, 1);
+
+    lua_pushstring(state, lh->sh->getVariableData(no).str);
+
     return 1;
 }
 
 int NSGetWindowSize(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    lua_pushinteger( state, lh->ons->getWidth() );
-    lua_pushinteger( state, lh->ons->getHeight() );
+    lua_pushinteger(state, lh->ons->getWidth());
+    lua_pushinteger(state, lh->ons->getHeight());
 
     return 2;
 }
@@ -418,10 +427,10 @@ int NSGetWindowSize(lua_State *state)
 int NSLuaAnimationInterval(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int val = lua_tointeger(state, 1);
-    
+
     lh->duration_time = val;
 
     return 0;
@@ -430,12 +439,13 @@ int NSLuaAnimationInterval(lua_State *state)
 int NSLuaAnimationMode(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int val = lua_toboolean(state, 1);
-    
-    lh->is_animatable = (val==1);
-    if (lh->is_animatable) lh->next_time = SDL_GetTicks() + lh->duration_time;
+
+    lh->is_animatable = (val == 1);
+    if (lh->is_animatable)
+        lh->next_time = SDL_GetTicks() + lh->duration_time;
 
     return 0;
 }
@@ -443,9 +453,9 @@ int NSLuaAnimationMode(lua_State *state)
 int NSOggClose(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
+    int no = luaL_checkinteger(state, 1);
 
     sprintf(cmd_buf, "_dwavestop %d", no);
     lh->sh->enterExternalScript(cmd_buf);
@@ -459,18 +469,18 @@ int NSOggClose(lua_State *state)
 int NSOggFade(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    int startvol= luaL_checkinteger( state, 2 );
-    int endvol= luaL_checkinteger( state, 3 );
-    int dur = luaL_checkinteger( state, 4 );
+    int no = luaL_checkinteger(state, 1);
+    int startvol = luaL_checkinteger(state, 2);
+    int endvol = luaL_checkinteger(state, 3);
+    int dur = luaL_checkinteger(state, 4);
     int flag = lua_toboolean(state, 5);
 
     if (flag)
         sprintf(cmd_buf, "_dwavestop %d", no);
     else
-        sprintf(cmd_buf, "_chvol %d %d", no, (endvol+10000)/100);
+        sprintf(cmd_buf, "_chvol %d %d", no, (endvol + 10000) / 100);
     lh->sh->enterExternalScript(cmd_buf);
     lh->ons->runScript();
     lh->sh->leaveExternalScript();
@@ -481,10 +491,10 @@ int NSOggFade(lua_State *state)
 int NSOggLoad(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    const char *str = luaL_checkstring( state, 2 );
+    int no = luaL_checkinteger(state, 1);
+    const char *str = luaL_checkstring(state, 2);
 
     sprintf(cmd_buf, "_dwaveload %d \"%s\"", no, str);
     lh->sh->enterExternalScript(cmd_buf);
@@ -497,9 +507,9 @@ int NSOggLoad(lua_State *state)
 int NSOggPlay(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
+    int no = luaL_checkinteger(state, 1);
     int val = lua_toboolean(state, 2);
 
     if (val)
@@ -516,12 +526,12 @@ int NSOggPlay(lua_State *state)
 int NSOggVolume(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    int val = luaL_checkinteger( state, 2 );
+    int no = luaL_checkinteger(state, 1);
+    int val = luaL_checkinteger(state, 2);
 
-    sprintf(cmd_buf, "_chvol %d %d", no, (val+10000)/100);
+    sprintf(cmd_buf, "_chvol %d %d", no, (val + 10000) / 100);
     lh->sh->enterExternalScript(cmd_buf);
     lh->ons->runScript();
     lh->sh->leaveExternalScript();
@@ -531,139 +541,149 @@ int NSOggVolume(lua_State *state)
 
 int NSPopInt(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int val = lh->sh->getEndStatus();
-    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ)){
-        lua_pushstring( state, "LUAHandler::NSPopInt() no integer." );
-        lua_error( state );
+    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ))
+    {
+        lua_pushstring(state, "LUAHandler::NSPopInt() no integer.");
+        lua_error(state);
     }
 
-    lua_pushnumber( state, lh->sh->readInt() );
+    lua_pushnumber(state, lh->sh->readInt());
 
     return 1;
 }
 
 int NSPopIntRef(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int val = lh->sh->getEndStatus();
-    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ)){
-        lua_pushstring( state, "LUAHandler::NSPopIntRef() no integer variable." );
-        lua_error( state );
+    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ))
+    {
+        lua_pushstring(state, "LUAHandler::NSPopIntRef() no integer variable.");
+        lua_error(state);
     }
 
     lh->sh->readVariable();
-    if (lh->sh->current_variable.type != ScriptHandler::VAR_INT){
-        lua_pushstring( state, "LUAHandler::NSPopIntRef() no integer variable." );
-        lua_error( state );
+    if (lh->sh->current_variable.type != ScriptHandler::VAR_INT)
+    {
+        lua_pushstring(state, "LUAHandler::NSPopIntRef() no integer variable.");
+        lua_error(state);
     }
-        
-    lua_pushnumber( state, lh->sh->current_variable.var_no );
+
+    lua_pushnumber(state, lh->sh->current_variable.var_no);
 
     return 1;
 }
 
 int NSPopStr(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int val = lh->sh->getEndStatus();
-    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ)){
-        lua_pushstring( state, "LUAHandler::NSPopStr() no string." );
-        lua_error( state );
+    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ))
+    {
+        lua_pushstring(state, "LUAHandler::NSPopStr() no string.");
+        lua_error(state);
     }
 
-    lua_pushstring( state, lh->sh->readStr() );
+    lua_pushstring(state, lh->sh->readStr());
 
     return 1;
 }
 
 int NSPopStrRef(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int val = lh->sh->getEndStatus();
-    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ)){
-        lua_pushstring( state, "LUAHandler::NSPopStrRef() no string variable." );
-        lua_error( state );
+    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ))
+    {
+        lua_pushstring(state, "LUAHandler::NSPopStrRef() no string variable.");
+        lua_error(state);
     }
 
     lh->sh->readVariable();
-    if (lh->sh->current_variable.type != ScriptHandler::VAR_STR){
-        lua_pushstring( state, "LUAHandler::NSPopStrRef() no string variable." );
-        lua_error( state );
+    if (lh->sh->current_variable.type != ScriptHandler::VAR_STR)
+    {
+        lua_pushstring(state, "LUAHandler::NSPopStrRef() no string variable.");
+        lua_error(state);
     }
-        
-    lua_pushnumber( state, lh->sh->current_variable.var_no );
+
+    lua_pushnumber(state, lh->sh->current_variable.var_no);
 
     return 1;
 }
 
 int NSPopLabel(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int val = lh->sh->getEndStatus();
-    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ)){
-        lua_pushstring( state, "LUAHandler::NSPopLabel() no label." );
-        lua_error( state );
+    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ))
+    {
+        lua_pushstring(state, "LUAHandler::NSPopLabel() no label.");
+        lua_error(state);
     }
 
     const char *str = lh->sh->readLabel();
-    if (str[0] != '*'){
-        lua_pushstring( state, "LUAHandler::NSPopLabel() no label." );
-        lua_error( state );
+    if (str[0] != '*')
+    {
+        lua_pushstring(state, "LUAHandler::NSPopLabel() no label.");
+        lua_error(state);
     }
-        
-    lua_pushstring( state, str+1 );
+
+    lua_pushstring(state, str + 1);
 
     return 1;
 }
 
 int NSPopID(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int val = lh->sh->getEndStatus();
-    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ)){
-        lua_pushstring( state, "LUAHandler::NSPopID() no ID." );
-        lua_error( state );
+    if (val & ScriptHandler::END_COMMA && !(val & ScriptHandler::END_COMMA_READ))
+    {
+        lua_pushstring(state, "LUAHandler::NSPopID() no ID.");
+        lua_error(state);
     }
 
-    lua_pushstring( state, lh->sh->readLabel() );
+    lua_pushstring(state, lh->sh->readLabel());
 
     return 1;
 }
 
 int NSPopComma(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int val = lh->sh->getEndStatus();
-    if (!(val & ScriptHandler::END_COMMA) || val & ScriptHandler::END_COMMA_READ){
-        lua_pushstring( state, "LUAHandler::NSPopComma() no comma." );
-        lua_error( state );
+    if (!(val & ScriptHandler::END_COMMA) || val & ScriptHandler::END_COMMA_READ)
+    {
+        lua_pushstring(state, "LUAHandler::NSPopComma() no comma.");
+        lua_error(state);
     }
-    
-    lh->sh->setEndStatus( ScriptHandler::END_COMMA_READ );
-    
+
+    lh->sh->setEndStatus(ScriptHandler::END_COMMA_READ);
+
     return 0;
 }
 
 int NSReturn(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
-    
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
+
     lh->ons->returnCommand();
 
     return 0;
@@ -671,45 +691,46 @@ int NSReturn(lua_State *state)
 
 int NSSetIntValue(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no  = luaL_checkinteger( state, 1 );
-    int val = luaL_checkinteger( state, 2 );
-    
-    lh->sh->setNumVariable( no, val );
-    
+    int no = luaL_checkinteger(state, 1);
+    int val = luaL_checkinteger(state, 2);
+
+    lh->sh->setNumVariable(no, val);
+
     return 0;
 }
 
 int NSSetStrValue(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
+    int no = luaL_checkinteger(state, 1);
     const char *str = NULL;
-    if (lua_isstring( state, 2 ))
-        str = luaL_checkstring( state, 2 );
-    
+    if (lua_isstring(state, 2))
+        str = luaL_checkstring(state, 2);
+
     if (lh->sh->getVariableData(no).str)
         delete[] lh->sh->getVariableData(no).str;
     lh->sh->getVariableData(no).str = NULL;
-    
-    if (str){
+
+    if (str)
+    {
         lh->sh->getVariableData(no).str = new char[strlen(str) + 1];
         strcpy(lh->sh->getVariableData(no).str, str);
     }
-    
+
     return 0;
 }
 
 int NSSleep(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int val = luaL_checkinteger( state, 1 );
+    int val = luaL_checkinteger(state, 1);
 
     sprintf(cmd_buf, "_wait %d", val);
     lh->sh->enterExternalScript(cmd_buf);
@@ -722,9 +743,9 @@ int NSSleep(lua_State *state)
 int NSSp2Clear(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
+    int no = luaL_checkinteger(state, 1);
 
     sprintf(cmd_buf, "_csp2 %d", no);
     lh->sh->enterExternalScript(cmd_buf);
@@ -737,15 +758,15 @@ int NSSp2Clear(lua_State *state)
 int NSSp2GetInfo(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
+    int no = luaL_checkinteger(state, 1);
 
     AnimationInfo *ai = lh->ons->getSprite2Info(no);
 
-    lua_pushinteger( state, ai->orig_pos.w / ai->num_of_cells );
-    lua_pushinteger( state, ai->orig_pos.h );
-    lua_pushinteger( state, ai->num_of_cells );
+    lua_pushinteger(state, ai->orig_pos.w / ai->num_of_cells);
+    lua_pushinteger(state, ai->orig_pos.h);
+    lua_pushinteger(state, ai->num_of_cells);
 
     return 3;
 }
@@ -753,19 +774,19 @@ int NSSp2GetInfo(lua_State *state)
 int NSSp2GetPos(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
+    int no = luaL_checkinteger(state, 1);
 
     AnimationInfo *ai = lh->ons->getSprite2Info(no);
 
-    lua_pushinteger( state, ai->orig_pos.x );
-    lua_pushinteger( state, ai->orig_pos.y );
-    lua_pushinteger( state, ai->scale_x );
-    lua_pushinteger( state, ai->scale_y );
-    lua_pushinteger( state, ai->rot );
-    lua_pushinteger( state, ai->trans );
-    lua_pushinteger( state, ai->blending_mode );
+    lua_pushinteger(state, ai->orig_pos.x);
+    lua_pushinteger(state, ai->orig_pos.y);
+    lua_pushinteger(state, ai->scale_x);
+    lua_pushinteger(state, ai->scale_y);
+    lua_pushinteger(state, ai->rot);
+    lua_pushinteger(state, ai->trans);
+    lua_pushinteger(state, ai->blending_mode);
 
     return 7;
 }
@@ -773,12 +794,12 @@ int NSSp2GetPos(lua_State *state)
 int NSSp2Load(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    const char *str = luaL_checkstring( state, 2 );
+    int no = luaL_checkinteger(state, 1);
+    const char *str = luaL_checkstring(state, 2);
 
-    sprintf(cmd_buf, "_lsp2 %d, \"%s\", %d, 0, 100, 100, 0", no, str, lh->ons->getWidth()*2);
+    sprintf(cmd_buf, "_lsp2 %d, \"%s\", %d, 0, 100, 100, 0", no, str, lh->ons->getWidth() * 2);
     lh->sh->enterExternalScript(cmd_buf);
     lh->ons->runScript();
     lh->sh->leaveExternalScript();
@@ -789,16 +810,16 @@ int NSSp2Load(lua_State *state)
 int NSSp2Move(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    int x  = luaL_checkinteger( state, 2 );
-    int y  = luaL_checkinteger( state, 3 );
-    int sx = luaL_checkinteger( state, 4 );
-    int sy = luaL_checkinteger( state, 5 );
-    int r  = luaL_checkinteger( state, 6 );
-    int alpha = luaL_checkinteger( state, 7 );
-    int opt = luaL_checkinteger( state, 8 );
+    int no = luaL_checkinteger(state, 1);
+    int x = luaL_checkinteger(state, 2);
+    int y = luaL_checkinteger(state, 3);
+    int sx = luaL_checkinteger(state, 4);
+    int sy = luaL_checkinteger(state, 5);
+    int r = luaL_checkinteger(state, 6);
+    int alpha = luaL_checkinteger(state, 7);
+    int opt = luaL_checkinteger(state, 8);
 
     lh->ons->getSprite2Info(no)->blending_mode = opt;
     sprintf(cmd_buf, "_amsp2 %d, %d, %d, %d, %d, %d, %d", no, x, y, sx, sy, r, alpha);
@@ -812,10 +833,10 @@ int NSSp2Move(lua_State *state)
 int NSSpCell(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    int cell = luaL_checkinteger( state, 2 );
+    int no = luaL_checkinteger(state, 1);
+    int cell = luaL_checkinteger(state, 2);
 
     sprintf(cmd_buf, "_cell %d, %d", no, cell);
     lh->sh->enterExternalScript(cmd_buf);
@@ -828,9 +849,9 @@ int NSSpCell(lua_State *state)
 int NSSpClear(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
+    int no = luaL_checkinteger(state, 1);
 
     sprintf(cmd_buf, "_csp %d", no);
     lh->sh->enterExternalScript(cmd_buf);
@@ -843,15 +864,15 @@ int NSSpClear(lua_State *state)
 int NSSpGetInfo(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
+    int no = luaL_checkinteger(state, 1);
 
     AnimationInfo *ai = lh->ons->getSpriteInfo(no);
 
-    lua_pushinteger( state, ai->orig_pos.w / ai->num_of_cells );
-    lua_pushinteger( state, ai->orig_pos.h );
-    lua_pushinteger( state, ai->num_of_cells );
+    lua_pushinteger(state, ai->orig_pos.w / ai->num_of_cells);
+    lua_pushinteger(state, ai->orig_pos.h);
+    lua_pushinteger(state, ai->num_of_cells);
 
     return 3;
 }
@@ -859,15 +880,15 @@ int NSSpGetInfo(lua_State *state)
 int NSSpGetPos(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
+    int no = luaL_checkinteger(state, 1);
 
     AnimationInfo *ai = lh->ons->getSpriteInfo(no);
 
-    lua_pushinteger( state, ai->orig_pos.x );
-    lua_pushinteger( state, ai->orig_pos.y );
-    lua_pushinteger( state, ai->trans );
+    lua_pushinteger(state, ai->orig_pos.x);
+    lua_pushinteger(state, ai->orig_pos.y);
+    lua_pushinteger(state, ai->trans);
 
     return 3;
 }
@@ -875,12 +896,12 @@ int NSSpGetPos(lua_State *state)
 int NSSpLoad(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    const char *str = luaL_checkstring( state, 2 );
+    int no = luaL_checkinteger(state, 1);
+    const char *str = luaL_checkstring(state, 2);
 
-    sprintf(cmd_buf, "_lsp %d, \"%s\", %d, 0", no, str, lh->ons->getWidth()+1);
+    sprintf(cmd_buf, "_lsp %d, \"%s\", %d, 0", no, str, lh->ons->getWidth() + 1);
     lh->sh->enterExternalScript(cmd_buf);
     lh->ons->runScript();
     lh->sh->leaveExternalScript();
@@ -891,12 +912,12 @@ int NSSpLoad(lua_State *state)
 int NSSpMove(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    int x  = luaL_checkinteger( state, 2 );
-    int y  = luaL_checkinteger( state, 3 );
-    int alpha = luaL_checkinteger( state, 4 );
+    int no = luaL_checkinteger(state, 1);
+    int x = luaL_checkinteger(state, 2);
+    int y = luaL_checkinteger(state, 3);
+    int alpha = luaL_checkinteger(state, 4);
 
     sprintf(cmd_buf, "_amsp %d, %d, %d, %d", no, x, y, alpha);
     lh->sh->enterExternalScript(cmd_buf);
@@ -909,10 +930,10 @@ int NSSpMove(lua_State *state)
 int NSSpVisible(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no = luaL_checkinteger( state, 1 );
-    int v  = lua_toboolean( state, 2 );
+    int no = luaL_checkinteger(state, 1);
+    int v = lua_toboolean(state, 2);
 
     sprintf(cmd_buf, "_vsp %d, %d", no, v);
     lh->sh->enterExternalScript(cmd_buf);
@@ -925,7 +946,7 @@ int NSSpVisible(lua_State *state)
 int NSTimer(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    lua_pushinteger( state, SDL_GetTicks() );
+    lua_pushinteger(state, SDL_GetTicks());
 
     return 1;
 }
@@ -933,7 +954,7 @@ int NSTimer(lua_State *state)
 int NSUpdate(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     sprintf(cmd_buf, "_print 1");
     lh->sh->enterExternalScript(cmd_buf);
@@ -951,10 +972,10 @@ int lua_dummy(lua_State *state)
 int NSSp2Visible(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int no = luaL_checkinteger(state, 1);
-    int v  = lua_toboolean(state, 2);
+    int v = lua_toboolean(state, 2);
 
     sprintf(cmd_buf, "vsp2 %d, %d", no, v);
     lh->sh->enterExternalScript(cmd_buf);
@@ -964,21 +985,22 @@ int NSSp2Visible(lua_State *state)
     return 0;
 }
 
-//LuaªÊÕº√¸¡Ó  --jh10001
+// LuaªÊÕº√¸¡Ó  --jh10001
 int NSDBlt(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int no = luaL_checkinteger(state, 1);
     int dx = luaL_checkinteger(state, 2);
     int dy = luaL_checkinteger(state, 3);
-    int w  = luaL_checkinteger(state, 4);
-    int h  = luaL_checkinteger(state, 5);
+    int w = luaL_checkinteger(state, 4);
+    int h = luaL_checkinteger(state, 5);
     int sx = luaL_checkinteger(state, 6);
     int sy = luaL_checkinteger(state, 7);
 
-    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+    if (no < 0 || no >= MAX_TEXTURE_NUM)
+    {
         utils::printInfo("wrong texture number.\n");
         return 0;
     }
@@ -993,7 +1015,7 @@ int NSDBlt(lua_State *state)
 int NSDClear(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     lh->ons->directDraw.clear();
 
@@ -1003,7 +1025,7 @@ int NSDClear(lua_State *state)
 int NSDCopyToBg(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     sprintf(cmd_buf, "bgcpy");
     lh->sh->enterExternalScript(cmd_buf);
@@ -1013,25 +1035,28 @@ int NSDCopyToBg(lua_State *state)
     return 0;
 }
 
-inline int clamp(int num, int min, int max) {
+inline int clamp(int num, int min, int max)
+{
     assert(min < max);
-    if (num > max) return max;
-    if (num < min) return min;
+    if (num > max)
+        return max;
+    if (num < min)
+        return min;
     return num;
 }
 
 int NSDFill(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int lx = luaL_checkinteger(state, 1);
     int ly = luaL_checkinteger(state, 2);
     int rx = luaL_checkinteger(state, 3);
     int ry = luaL_checkinteger(state, 4);
-    int r  = luaL_checkinteger(state, 5);
-    int g  = luaL_checkinteger(state, 6);
-    int b  = luaL_checkinteger(state, 7);
+    int r = luaL_checkinteger(state, 5);
+    int g = luaL_checkinteger(state, 6);
+    int b = luaL_checkinteger(state, 7);
 
     if (rx <= lx || ry <= ly)
         return 0;
@@ -1048,11 +1073,12 @@ int NSDFill(lua_State *state)
 int NSDGetSize(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int no = luaL_checkinteger(state, 1);
 
-    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+    if (no < 0 || no >= MAX_TEXTURE_NUM)
+    {
         utils::printInfo("wrong texture number.\n");
         return 0;
     }
@@ -1060,8 +1086,8 @@ int NSDGetSize(lua_State *state)
     int width = 0, height = 0;
     lh->ons->directDraw.getTextureSize(no, width, height);
 
-    lua_pushinteger( state, width );
-    lua_pushinteger( state, height );
+    lua_pushinteger(state, width);
+    lua_pushinteger(state, height);
 
     return 2;
 }
@@ -1069,7 +1095,7 @@ int NSDGetSize(lua_State *state)
 int NSDPresent(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     lh->ons->directDraw.present();
 
@@ -1079,18 +1105,19 @@ int NSDPresent(lua_State *state)
 int NSDSp(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int no = luaL_checkinteger(state, 1);
     int dx = luaL_checkinteger(state, 2);
     int dy = luaL_checkinteger(state, 3);
-    int w  = luaL_checkinteger(state, 4);
-    int h  = luaL_checkinteger(state, 5);
+    int w = luaL_checkinteger(state, 4);
+    int h = luaL_checkinteger(state, 5);
     int sx = luaL_checkinteger(state, 6);
     int sy = luaL_checkinteger(state, 7);
-    int a  = luaL_checkinteger(state, 8);
+    int a = luaL_checkinteger(state, 8);
 
-    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+    if (no < 0 || no >= MAX_TEXTURE_NUM)
+    {
         utils::printInfo("wrong texture number.\n");
         return 0;
     }
@@ -1107,18 +1134,19 @@ int NSDSp(lua_State *state)
 int NSDSpAdd(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
     int no = luaL_checkinteger(state, 1);
     int dx = luaL_checkinteger(state, 2);
     int dy = luaL_checkinteger(state, 3);
-    int w  = luaL_checkinteger(state, 4);
-    int h  = luaL_checkinteger(state, 5);
+    int w = luaL_checkinteger(state, 4);
+    int h = luaL_checkinteger(state, 5);
     int sx = luaL_checkinteger(state, 6);
     int sy = luaL_checkinteger(state, 7);
-    int a  = luaL_checkinteger(state, 8);
+    int a = luaL_checkinteger(state, 8);
 
-    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+    if (no < 0 || no >= MAX_TEXTURE_NUM)
+    {
         utils::printInfo("wrong texture number.\n");
         return 0;
     }
@@ -1135,21 +1163,22 @@ int NSDSpAdd(lua_State *state)
 int NSDSp2Add(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    int no  = luaL_checkinteger(state, 1);
+    int no = luaL_checkinteger(state, 1);
     int dcx = luaL_checkinteger(state, 2);
     int dcy = luaL_checkinteger(state, 3);
-    int sx  = luaL_checkinteger(state, 4);
-    int sy  = luaL_checkinteger(state, 5);
-    int w   = luaL_checkinteger(state, 6);
-    int h   = luaL_checkinteger(state, 7);
-    int xs  = luaL_checkinteger(state, 8);
-    int ys  = luaL_checkinteger(state, 9);
+    int sx = luaL_checkinteger(state, 4);
+    int sy = luaL_checkinteger(state, 5);
+    int w = luaL_checkinteger(state, 6);
+    int h = luaL_checkinteger(state, 7);
+    int xs = luaL_checkinteger(state, 8);
+    int ys = luaL_checkinteger(state, 9);
     int rot = luaL_checkinteger(state, 10);
-    int a   = luaL_checkinteger(state, 11);
+    int a = luaL_checkinteger(state, 11);
 
-    if (no < 0 || no >= MAX_TEXTURE_NUM) {
+    if (no < 0 || no >= MAX_TEXTURE_NUM)
+    {
         utils::printInfo("wrong texture number.\n");
         return 0;
     }
@@ -1166,9 +1195,9 @@ int NSDSp2Add(lua_State *state)
 int NSDTransition(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    //TODO: Not Implemented.
+    // TODO: Not Implemented.
 
     return 0;
 }
@@ -1176,9 +1205,9 @@ int NSDTransition(lua_State *state)
 int NSDTransitionF(lua_State *state)
 {
     lua_getglobal(state, ONS_LUA_HANDLER_PTR);
-    LUAHandler *lh = (LUAHandler*)lua_topointer(state, -1);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    //TODO: Not Implemented.
+    // TODO: Not Implemented.
 
     return 0;
 }
@@ -1248,56 +1277,59 @@ static const struct luaL_Reg lua_lut[] = {
     LUA_FUNC_LUT(NSDClear),
     LUA_FUNC_LUT(NSDCopyToBg),
     LUA_FUNC_LUT(NSDDelete),
-    //LUA_FUNC_LUT(NSDefSpline),
+    // LUA_FUNC_LUT(NSDefSpline),
     LUA_FUNC_LUT(NSDFill),
     LUA_FUNC_LUT(NSDGetSize),
     LUA_FUNC_LUT(NSDLoad),
-    //LUA_FUNC_LUT(NSDoEvents),
-    //LUA_FUNC_LUT(NSDOffMode),
+    // LUA_FUNC_LUT(NSDoEvents),
+    // LUA_FUNC_LUT(NSDOffMode),
     LUA_FUNC_LUT(NSDPresent),
-    //LUA_FUNC_LUT(NSDPresentRect),
-    //LUA_FUNC_LUT(NSDSetSprite),
+    // LUA_FUNC_LUT(NSDPresentRect),
+    // LUA_FUNC_LUT(NSDSetSprite),
     LUA_FUNC_LUT(NSDSp),
     LUA_FUNC_LUT(NSDSp2),
     LUA_FUNC_LUT(NSDSpAdd),
     LUA_FUNC_LUT(NSDSp2Add),
-    //LUA_FUNC_LUT(NSDTransition),
-    //LUA_FUNC_LUT(NSDTransitionF),
-    {NULL, NULL}
-};
+    // LUA_FUNC_LUT(NSDTransition),
+    // LUA_FUNC_LUT(NSDTransitionF),
+    {NULL, NULL}};
 
 static int nsutf_from_ansi(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    const char *str = luaL_checkstring( state, 1 );
-    size_t len = strlen(str)*3+1;
-    if (conv_buf_len < len){
-        if (conv_buf) delete[] conv_buf;
+    const char *str = luaL_checkstring(state, 1);
+    size_t len = strlen(str) * 3 + 1;
+    if (conv_buf_len < len)
+    {
+        if (conv_buf)
+            delete[] conv_buf;
         conv_buf = new char[len];
         conv_buf_len = len;
     }
     DirectReader::convertCodingToUTF8(conv_buf, str);
-    lua_pushstring( state, conv_buf );
+    lua_pushstring(state, conv_buf);
 
     return 1;
 }
 
 static int nsutf_to_ansi(lua_State *state)
 {
-    lua_getglobal( state, ONS_LUA_HANDLER_PTR );
-    LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
+    lua_getglobal(state, ONS_LUA_HANDLER_PTR);
+    LUAHandler *lh = (LUAHandler *)lua_topointer(state, -1);
 
-    const char *str = luaL_checkstring( state, 1 );
-    size_t len = strlen(str)*2+1;
-    if (conv_buf_len < len){
-        if (conv_buf) delete[] conv_buf;
+    const char *str = luaL_checkstring(state, 1);
+    size_t len = strlen(str) * 2 + 1;
+    if (conv_buf_len < len)
+    {
+        if (conv_buf)
+            delete[] conv_buf;
         conv_buf = new char[len];
         conv_buf_len = len;
     }
     DirectReader::convertFromUTF8ToCoding(conv_buf, str);
-    lua_pushstring( state, conv_buf );
+    lua_pushstring(state, conv_buf);
 
     return 1;
 }
@@ -1305,35 +1337,34 @@ static int nsutf_to_ansi(lua_State *state)
 static const struct luaL_Reg module_nsutf[] = {
     LUA_FUNC_LUT(nsutf_from_ansi),
     LUA_FUNC_LUT(nsutf_to_ansi),
-    {NULL, NULL}
-};
+    {NULL, NULL}};
 
 static const struct luaL_Reg module_dpshadow[] = {
     LUA_FUNC_LUT_DUMMY(dpshadow_make),
     LUA_FUNC_LUT_DUMMY(dpshadow_merge),
-    {NULL, NULL}
-};
+    {NULL, NULL}};
 
-//LUAHandler::LUAHandler(ONScripter *ons)
+// LUAHandler::LUAHandler(ONScripter *ons)
 LUAHandler::LUAHandler()
 {
     state = NULL;
 
     is_animatable = false;
-    duration_time  = 15;
+    duration_time = 15;
     next_time = 0;
 
     screen_ratio1 = 1;
     screen_ratio2 = 1;
     error_str[0] = 0;
-    
-    for (unsigned int i=0 ; i<MAX_CALLBACK ; i++)
+
+    for (unsigned int i = 0; i < MAX_CALLBACK; i++)
         callback_state[i] = false;
 }
 
 LUAHandler::~LUAHandler()
 {
-    if (state) lua_close(state);
+    if (state)
+        lua_close(state);
 }
 
 #if LUA_VERSION_NUM >= 502
@@ -1357,7 +1388,7 @@ void LUAHandler::init(ONScripter *ons, ScriptHandler *sh,
 {
     this->ons = ons;
     this->sh = sh;
-    
+
     state = luaL_newstate();
     luaL_openlibs(state);
 
@@ -1376,7 +1407,7 @@ void LUAHandler::init(ONScripter *ons, ScriptHandler *sh,
     luaL_register(state, "nsutf", module_nsutf);
     luaL_register(state, "dpshadow", module_dpshadow);
 #endif
-    
+
     lua_pushlightuserdata(state, this);
     lua_setglobal(state, ONS_LUA_HANDLER_PTR);
 }
@@ -1384,30 +1415,35 @@ void LUAHandler::init(ONScripter *ons, ScriptHandler *sh,
 void LUAHandler::loadInitScript()
 {
     unsigned long length = sh->cBR->getFileLength(INIT_SCRIPT);
-    if (length == 0){
+    if (length == 0)
+    {
         utils::printInfo("cannot open %s\n", INIT_SCRIPT);
         return;
     }
 
-    unsigned char *buffer = new unsigned char[length+1];
+    unsigned char *buffer = new unsigned char[length + 1];
     int location;
     sh->cBR->getFile(INIT_SCRIPT, buffer, &location);
     buffer[length] = 0;
 
-    unsigned char *buffer2 = new unsigned char[length*3/2];
+    unsigned char *buffer2 = new unsigned char[length * 3 / 2];
     unsigned char *p = buffer;
     unsigned char *p2 = buffer2;
-    while(*p){
-        if (IS_TWO_BYTE(*p)){
+    while (*p)
+    {
+        if (IS_TWO_BYTE(*p))
+        {
             *p2++ = *p++;
-            if (*p == '\\') *p2++ = '\\';
+            if (*p == '\\')
+                *p2++ = '\\';
         }
         *p2++ = *p++;
     }
 
-    if (luaL_loadbuffer(state, (const char*)buffer2, p2 - buffer2, INIT_SCRIPT) || 
-        lua_pcall(state, 0, 0, 0)){
-        printf("cannot parse %s %s\n", INIT_SCRIPT, lua_tostring(state,-1));
+    if (luaL_loadbuffer(state, (const char *)buffer2, p2 - buffer2, INIT_SCRIPT) ||
+        lua_pcall(state, 0, 0, 0))
+    {
+        printf("cannot parse %s %s\n", INIT_SCRIPT, lua_tostring(state, -1));
     }
 
     delete[] buffer;
@@ -1441,7 +1477,7 @@ void LUAHandler::addCallback(const char *label)
 int LUAHandler::callFunction(bool is_callback, const char *cmd, void *data)
 {
     char cmd2[64];
-    
+
     if (is_callback)
         sprintf(cmd2, "NSCALL_%s", cmd);
     else
@@ -1451,38 +1487,45 @@ int LUAHandler::callFunction(bool is_callback, const char *cmd, void *data)
 
     int num_argument_value = 0;
     int num_return_value = 0;
-    char *buf=NULL;
+    char *buf = NULL;
     if (strcmp(cmd2, "NSCALL_animation") == 0)
         num_return_value = 1;
-    else if (strcmp(cmd2, "NSCALL_load") == 0){
+    else if (strcmp(cmd2, "NSCALL_load") == 0)
+    {
         num_argument_value = 1;
-        lua_pushinteger(state, *(int*)data);
+        lua_pushinteger(state, *(int *)data);
     }
-    else if (strcmp(cmd2, "NSCALL_text") == 0){
+    else if (strcmp(cmd2, "NSCALL_text") == 0)
+    {
         num_argument_value = 1;
-        char *p = sh->getStringBuffer()+ons->getStringBufferOffset();
-        buf = new char[strlen(p)+1];
-        memcpy(buf, p, strlen(p)+1);
+        char *p = sh->getStringBuffer() + ons->getStringBufferOffset();
+        buf = new char[strlen(p) + 1];
+        memcpy(buf, p, strlen(p) + 1);
         lua_pushstring(state, buf);
     }
-        
-    if (lua_pcall(state, num_argument_value, num_return_value, 0) != 0){
-        strcpy( error_str, lua_tostring(state, -1) );
+
+    if (lua_pcall(state, num_argument_value, num_return_value, 0) != 0)
+    {
+        strcpy(error_str, lua_tostring(state, -1));
         return -1;
     }
 
-    if (strcmp(cmd2, "NSCALL_animation") == 0){
-        if (lua_isboolean(state, -1) && lua_toboolean(state, -1)){
+    if (strcmp(cmd2, "NSCALL_animation") == 0)
+    {
+        if (lua_isboolean(state, -1) && lua_toboolean(state, -1))
+        {
             sprintf(cmd2, "NSUpdate");
             lua_getglobal(state, cmd2);
-            if (lua_pcall(state, 0, 0, 0) != 0){
-                strcpy( error_str, lua_tostring(state, -1) );
+            if (lua_pcall(state, 0, 0, 0) != 0)
+            {
+                strcpy(error_str, lua_tostring(state, -1));
                 return -1;
             }
         }
     }
 
-    if (buf) delete[] buf;
+    if (buf)
+        delete[] buf;
 
     return 0;
 }

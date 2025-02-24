@@ -29,12 +29,14 @@
 #include "DirtyRect.h"
 #include "ButtonLink.h"
 #include <SDL.h>
+#include "sjis2utf16.h"
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
 #if defined(USE_SMPEG)
 #include <smpeg.h>
 #endif
+
 #include "direct_draw.h"
 
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
@@ -617,11 +619,9 @@ private:
     };
     int refresh_shadow_text_mode;
 
-#ifdef USE_SDL_RENDERER
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *texture;
-#endif
     void setCaption(const char *title, const char *iconstr = NULL);
     // format = SDL_PIXELFORMAT_ABGR8888 for OpenGL ES 1.x, OpenGL ES 2.x (Android, iOS)
     // format = SDL_PIXELFORMAT_ARGB8888 for OpenGL, Direct3D (Windows, Linux, MacOSX) or for any 32bit surface without SDL_Renderer

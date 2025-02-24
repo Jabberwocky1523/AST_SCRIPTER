@@ -1,5 +1,5 @@
 /* -*- C++ -*-
- * 
+ *
  *  nsadec.cpp - NSA archive decoder
  *
  *  Copyright (c) 2001-2015 Ogapee. All rights reserved.
@@ -33,15 +33,16 @@
 #include "gbk2utf16.h"
 #ifdef _WIN32
 #include <direct.h>
-inline int mkdir(const char *pathname, int unused){
-	return _mkdir(pathname);
+inline int mkdir(const char *pathname, int unused)
+{
+    return _mkdir(pathname);
 }
 #endif
 
 extern int errno;
 Coding2UTF16 *coding2utf16;
 
-int main( int argc, char **argv )
+int main(int argc, char **argv)
 {
     NsaReader cNR;
     unsigned int nsa_offset = 0;
@@ -53,11 +54,16 @@ int main( int argc, char **argv )
     FILE *fp;
     struct stat file_stat;
 
-    if ( argc >= 2 ){
-        while ( argc > 2 ){
-			if (!strcmp(argv[1], "-ns2")) {
-				archive_type = BaseReader::ARCHIVE_TYPE_NS2;
-			} else if ( !strcmp( argv[1], "-offset") ){
+    if (argc >= 2)
+    {
+        while (argc > 2)
+        {
+            if (!strcmp(argv[1], "-ns2"))
+            {
+                archive_type = BaseReader::ARCHIVE_TYPE_NS2;
+            }
+            else if (!strcmp(argv[1], "-offset"))
+            {
                 nsa_offset = atoi(argv[2]);
                 argc--;
                 argv++;
@@ -67,50 +73,57 @@ int main( int argc, char **argv )
             argv++;
         }
     }
-    if ( argc != 2 ){
-        fprintf( stderr, "Usage: nsadec [-offset ##] [-ns2] arc_file\n");
+    if (argc != 2)
+    {
+        fprintf(stderr, "Usage: nsadec [-offset ##] [-ns2] arc_file\n");
         exit(-1);
     }
-    cNR.openForConvert( argv[1], archive_type, nsa_offset );
+    cNR.openForConvert(argv[1], archive_type, nsa_offset);
     count = cNR.getNumFiles();
-    
+
     SarReader::FileInfo sFI;
 
-    for ( i=0 ; i<count ; i++ ){
-        sFI = cNR.getFileByIndex( i );
-        length = cNR.getFileLength( sFI.name );
+    for (i = 0; i < count; i++)
+    {
+        sFI = cNR.getFileByIndex(i);
+        length = cNR.getFileLength(sFI.name);
         buffer = new unsigned char[length];
         unsigned int len;
-        if ( (len = cNR.getFile( sFI.name, buffer )) != length ){
-            //fprintf( stderr, "file %s can't be retrieved\n", sFI.name );
-            fprintf( stderr, "file %s is not fully retrieved %d %lu\n", sFI.name, len, length  );
+        if ((len = cNR.getFile(sFI.name, buffer)) != length)
+        {
+            // fprintf( stderr, "file %s can't be retrieved\n", sFI.name );
+            fprintf(stderr, "file %s is not fully retrieved %d %lu\n", sFI.name, len, length);
             length = sFI.length;
-            //continue;
+            // continue;
         }
 
-        strcpy( file_name, sFI.name );
-        for ( j=0 ; j<strlen(file_name) ; j++ ){
-            if ( file_name[j] == '\\' ){
+        strcpy(file_name, sFI.name);
+        for (j = 0; j < strlen(file_name); j++)
+        {
+            if (file_name[j] == '\\')
+            {
                 file_name[j] = '/';
-                strncpy( dir_name, file_name, j );
+                strncpy(dir_name, file_name, j);
                 dir_name[j] = '\0';
 
                 /* If the directory does'nt exist, create it */
-                if ( stat ( dir_name, &file_stat ) == -1 && errno == ENOENT )
-                    mkdir( dir_name, 00755 );
+                if (stat(dir_name, &file_stat) == -1 && errno == ENOENT)
+                    mkdir(dir_name, 00755);
             }
         }
-    
-        if ( (fp = fopen( file_name, "wb" ) )){
-            fwrite( buffer, 1, length, fp );
+
+        if ((fp = fopen(file_name, "wb")))
+        {
+            fwrite(buffer, 1, length, fp);
             fclose(fp);
         }
-        else{
-            printf("opening %s ... falied\n", file_name );
+        else
+        {
+            printf("opening %s ... falied\n", file_name);
         }
-        
+
         delete[] buffer;
     }
-    
+
     exit(0);
 }

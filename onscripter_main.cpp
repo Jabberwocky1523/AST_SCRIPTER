@@ -1,26 +1,26 @@
-/* -*- C++ -*-
- *
- *  onscripter_main.cpp -- main function of ONScripter
- *
- *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
- *            (C) 2014-2016 jh10001 <jh10001@live.cn>
- *
- *  ogapee@aqua.dti2.ne.jp
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+// /* -*- C++ -*-
+//  *
+//  *  onscripter_main.cpp -- main function of ONScripter
+//  *
+//  *  Copyright (c) 2001-2016 Ogapee. All rights reserved.
+//  *            (C) 2014-2016 jh10001 <jh10001@live.cn>
+//  *
+//  *  ogapee@aqua.dti2.ne.jp
+//  *
+//  *  This program is free software; you can redistribute it and/or modify
+//  *  it under the terms of the GNU General Public License as published by
+//  *  the Free Software Foundation; either version 2 of the License, or
+//  *  (at your option) any later version.
+//  *
+//  *  This program is distributed in the hope that it will be useful,
+//  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  *  GNU General Public License for more details.
+//  *
+//  *  You should have received a copy of the GNU General Public License
+//  *  along with this program; if not, write to the Free Software
+//  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//  */
 
 #include "ONScripter.h"
 #include "Utils.h"
@@ -30,6 +30,7 @@
 
 ONScripter ons;
 Coding2UTF16 *coding2utf16 = NULL;
+// #define USE_SDL_RENDERER
 
 // #if defined(IOS)
 // #import <Foundation/NSArray.h>
@@ -85,7 +86,55 @@ Coding2UTF16 *coding2utf16 = NULL;
 //     return thid;
 // }
 // #endif
+void parseOption(int argc, char *argv[]);
+void optionVersion();
+void optionHelp();
+int main(int argc, char *argv[])
+{
+    utils::printInfo("ONScripter-Jh version %s (%s, %d.%02d)\n", ONS_JH_VERSION, ONS_VERSION, NSC_VERSION / 100, NSC_VERSION % 100);
+    argv++;
+    parseOption(argc - 1, argv);
+    const char *argfilename = "ons_args";
+    FILE *fp = NULL;
+    if (ons.getArchivePath())
+    {
+        size_t len = strlen(ons.getArchivePath()) + strlen(argfilename) + 1;
+        char *full_path = new char[len];
+        sprintf(full_path, "%s%s", ons.getArchivePath(), argfilename);
+        fp = fopen(full_path, "r");
+        delete[] full_path;
+    }
+    else
+        fp = fopen(argfilename, "r");
+    if (fp)
+    {
+        char **args = new char *[16];
+        int argn = 0;
+        args[argn] = new char[64];
+        while (argn < 16 && (fscanf(fp, "%s", args[argn]) > 0))
+        {
+            ++argn;
+            if (argn < 16)
+                args[argn] = new char[64];
+        }
+        parseOption(argn, args);
+        for (int i = 0; i < argn; ++i)
+            delete[] args[i];
+        delete[] args;
+    }
 
+    if (coding2utf16 == NULL)
+        coding2utf16 = new GBK2UTF16();
+
+    // ----------------------------------------
+    // Run ONScripter
+    if (ons.openScript())
+        exit(-1);
+    if (ons.init())
+        exit(-1);
+    ons.executeLabel();
+    exit(0);
+}
 void optionHelp()
 {
     printf("Usage: onscripter [option ...]\n");
@@ -249,51 +298,4 @@ void parseOption(int argc, char *argv[])
         argc--;
         argv++;
     }
-}
-
-int main(int argc, char *argv[])
-{
-    utils::printInfo("ONScripter-Jh version %s (%s, %d.%02d)\n", ONS_JH_VERSION, ONS_VERSION, NSC_VERSION / 100, NSC_VERSION % 100);
-    argv++;
-    parseOption(argc - 1, argv);
-    const char *argfilename = "ons_args";
-    FILE *fp = NULL;
-    if (ons.getArchivePath())
-    {
-        size_t len = strlen(ons.getArchivePath()) + strlen(argfilename) + 1;
-        char *full_path = new char[len];
-        sprintf(full_path, "%s%s", ons.getArchivePath(), argfilename);
-        fp = fopen(full_path, "r");
-        delete[] full_path;
-    }
-    else
-        fp = fopen(argfilename, "r");
-    if (fp)
-    {
-        char **args = new char *[16];
-        int argn = 0;
-        args[argn] = new char[64];
-        while (argn < 16 && (fscanf(fp, "%s", args[argn]) > 0))
-        {
-            ++argn;
-            if (argn < 16)
-                args[argn] = new char[64];
-        }
-        parseOption(argn, args);
-        for (int i = 0; i < argn; ++i)
-            delete[] args[i];
-        delete[] args;
-    }
-
-    if (coding2utf16 == NULL)
-        coding2utf16 = new GBK2UTF16();
-
-    // ----------------------------------------
-    // Run ONScripter
-    if (ons.openScript())
-        exit(-1);
-    if (ons.init())
-        exit(-1);
-    ons.executeLabel();
-    exit(0);
 }
