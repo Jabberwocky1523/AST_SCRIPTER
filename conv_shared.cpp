@@ -26,7 +26,7 @@
 #include <string.h>
 extern "C"
 {
-#include </opt/homebrew/Cellar/jpeg/9f/include/jpeglib.h>
+#include <jpeglib.h>
 };
 #include <bzlib.h>
 #include "resize_image.h"
