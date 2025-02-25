@@ -30,62 +30,6 @@
 
 ONScripter ons;
 Coding2UTF16 *coding2utf16 = NULL;
-// #define USE_SDL_RENDERER
-
-// #if defined(IOS)
-// #import <Foundation/NSArray.h>
-// #import <UIKit/UIKit.h>
-// #import "DataCopier.h"
-// #import "DataDownloader.h"
-// #import "ScriptSelector.h"
-// #import "MoviePlayer.h"
-// #endif
-
-// #ifdef WINRT
-// #include "ScriptSelector.h"
-// #endif
-
-// #if defined(PSP)
-// #include <pspkernel.h>
-// #include <psputility.h>
-// #include <psppower.h>
-// #include <ctype.h>
-
-// PSP_HEAP_SIZE_KB(-1);
-
-// int psp_power_resume_number = 0;
-
-// int exit_callback(int arg1, int arg2, void *common)
-// {
-//     ons.endCommand();
-//     sceKernelExitGame();
-//     return 0;
-// }
-
-// int power_callback(int unknown, int pwrflags, void *common)
-// {
-//     if (pwrflags & PSP_POWER_CB_RESUMING) psp_power_resume_number++;
-//     return 0;
-// }
-
-// int CallbackThread(SceSize args, void *argp)
-// {
-//     int cbid;
-//     cbid = sceKernelCreateCallback("Exit Callback", exit_callback, NULL);
-//     sceKernelRegisterExitCallback(cbid);
-//     cbid = sceKernelCreateCallback("Power Callback", power_callback, NULL);
-//     scePowerRegisterCallback(0, cbid);
-//     sceKernelSleepThreadCB();
-//     return 0;
-// }
-
-// int SetupCallbacks(void)
-// {
-//     int thid = sceKernelCreateThread("update_thread", CallbackThread, 0x11, 0xFA0, 0, 0);
-//     if (thid >= 0) sceKernelStartThread(thid, 0, 0);
-//     return thid;
-// }
-// #endif
 void parseOption(int argc, char *argv[]);
 void optionVersion();
 void optionHelp();
